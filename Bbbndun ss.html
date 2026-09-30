@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library System with Cloud Storage</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f4f7f6; padding: 15px; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; margin-bottom: 15px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 15px; }
+        .pdf-box { background: #eef2f3; padding: 10px; border-radius: 5px; border: 1px dashed #aaa; }
+        .btn-add { background-color: #27ae60; color: white; border: none; padding: 12px; border-radius: 5px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .btn-add:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #34495e; color: white; }
+        .btn-pdf { background-color: #e67e22; color: white; padding: 4px 8px; text-decoration: none; border-radius: 4px; font-size: 12px; display: inline-block; }
+        .btn-del { background-color: #e74c3c; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
+        #status { font-size: 13px; color: #2980b9; font-weight: bold; margin-top: 5px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📚 Cloud Library Management</h2>
+
+    <div class="input-group">
+        <input type="text" id="bookTitle" placeholder="Pothe Name eka (Title)...">
+        <input type="text" id="bookAuthor" placeholder="Liyakaru (Author)...">
+        <select id="bookCategory">
+            <option value="Novel">Novel</option>
+            <option value="Education">Education</option>
+            <option value="Other">Other</option>
+        </select>
+        
+        <div class="pdf-box">
+            <label style="font-size: 13px; font-weight: bold;">PDF File / Cover Upload (Free Cloud):</label><br><br>
+            <input type="file" id="filePdf" accept="application/pdf,image/*">
+            <div id="status">Cloud Storage එකට Upload වෙනවා, කරුණාකර රැඳී සිටින්න...</div>
+            <small style="display:block; margin: 5px 0; color:#7f8c8d;">නැත්නම් Direct PDF Link එකක් දන්න:</small>
+            <input type="text" id="urlPdf" placeholder="https://example.com/book.pdf">
+        </div>
+
+        <button type="button" id="addBtn" class="btn-add">Add Book</button>
+    </div>
+
+    <input type="text" id="search" placeholder="Poth hoyanna...">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>PDF / Link</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="bookList"></tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        loadTable();
+
+        var addBtn = document.getElementById('addBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', addNewBook);
+        }
+
+        var searchInput = document.getElementById('search');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', filterBooks);
+        }
+    });
+
+    function getStorageData() {
+        var data = localStorage.getItem('cloudLibraryData');
+        return data ? JSON.parse(data) : [];
+    }
+
+    async function addNewBook() {
+        var titleElem = /** @type {HTMLInputElement} */ (document.getElementById('bookTitle'));
+        var authorElem = /** @type {HTMLInputElement} */ (document.getElementById('bookAuthor'));
+        var categoryEl
